@@ -143,7 +143,9 @@ def test_action_runner():
         
         assert script.exists()
         assert script.is_file()
-        assert script.stat().st_mode & 0o111  # Executable
+        # Skip executable check on Windows (doesn't support Unix permissions)
+        if sys.platform != "win32":
+            assert script.stat().st_mode & 0o111  # Executable
         
         # Test dry run
         result = runner.execute_action(script, dry_run=True)
