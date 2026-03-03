@@ -1,0 +1,7 @@
+# Kiro Automation Framework - No runtime dependencies!
+# Uses only Python standard library
+
+# Development dependencies (optional)
+pytest>=7.0
+black>=22.0
+mypy>=0.950
