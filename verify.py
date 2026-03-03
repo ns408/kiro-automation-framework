@@ -21,10 +21,10 @@ def test_imports():
             Sandbox,
             ActionRunner
         )
-        print("  ✅ All imports successful")
+        print("  [OK] All imports successful")
         return True
     except ImportError as e:
-        print(f"  ❌ Import failed: {e}")
+        print(f"  [FAIL] Import failed: {e}")
         return False
 
 def test_trust_levels():
@@ -46,10 +46,10 @@ def test_trust_levels():
         manager = TrustLevelManager(TrustLevel.FULL_AUTO)
         assert manager.is_allowed('delete_file')
         
-        print("  ✅ Trust levels working")
+        print("  [OK] Trust levels working")
         return True
     except Exception as e:
-        print(f"  ❌ Trust levels failed: {e}")
+        print(f"  [FAIL] Trust levels failed: {e}")
         return False
 
 def test_whitelist():
@@ -81,10 +81,10 @@ def test_whitelist():
         import shutil
         shutil.rmtree(temp_dir)
         
-        print("  ✅ Whitelist working")
+        print("  [OK] Whitelist working")
         return True
     except Exception as e:
-        print(f"  ❌ Whitelist failed: {e}")
+        print(f"  [FAIL] Whitelist failed: {e}")
         return False
 
 def test_sandbox():
@@ -112,10 +112,10 @@ def test_sandbox():
         sandbox.cleanup()
         assert not sandbox_path.exists()
         
-        print("  ✅ Sandbox working")
+        print("  [OK] Sandbox working")
         return True
     except Exception as e:
-        print(f"  ❌ Sandbox failed: {e}")
+        print(f"  [FAIL] Sandbox failed: {e}")
         return False
 
 def test_action_runner():
@@ -152,10 +152,10 @@ def test_action_runner():
         # Cleanup
         shutil.rmtree(temp_dir)
         
-        print("  ✅ Action runner working")
+        print("  [OK] Action runner working")
         return True
     except Exception as e:
-        print(f"  ❌ Action runner failed: {e}")
+        print(f"  [FAIL] Action runner failed: {e}")
         return False
 
 def main():
@@ -175,7 +175,7 @@ def main():
     print("\n" + "="*60)
     
     if all(results):
-        print("✅ All tests passed!")
+        print("[SUCCESS] All tests passed!")
         print("\nFramework is ready to use.")
         print("\nNext steps:")
         print("  1. Read QUICKSTART.md")
@@ -183,7 +183,7 @@ def main():
         print("  3. Read docs in docs/")
         return 0
     else:
-        print("❌ Some tests failed")
+        print("[FAILED] Some tests failed")
         print("\nPlease check the errors above.")
         return 1
 
