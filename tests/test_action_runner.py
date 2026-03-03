@@ -33,7 +33,9 @@ def test_action_executable(temp_runner):
     script = temp_runner.generate_action(
         description="Test", commands=["echo 'test'"], files_affected=[], reason="Test"
     )
-    assert script.stat().st_mode & 0o111
+    # Skip executable check on Windows (doesn't support Unix permissions)
+    if sys.platform != "win32":
+        assert script.stat().st_mode & 0o111
 
 
 def test_dry_run(temp_runner):
