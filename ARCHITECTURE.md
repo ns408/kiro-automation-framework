@@ -1,0 +1,137 @@
+# Kiro Automation Framework - Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                        USER / AI ASSISTANT                          │
+└────────────────────────────┬────────────────────────────────────────┘
+                             │
+                             ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                     TRUST LEVEL MANAGER                             │
+│  ┌──────────────────────────────────────────────────────────────┐  │
+│  │  Level 0: Read Only          → read_file, list_dir, search   │  │
+│  │  Level 1: Safe Create        → + create_file, mkdir          │  │
+│  │  Level 2: Modify w/ Backup   → + modify_file, append_file   │  │
+│  │  Level 3: Action Scripts     → + generate_action            │  │
+│  │  Level 4: Full Automation    → + execute_action, delete     │  │
+│  └──────────────────────────────────────────────────────────────┘  │
+└────────────────────────────┬────────────────────────────────────────┘
+                             │
+                             ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                    OPERATION WHITELIST                              │
+│  ┌──────────────────────────────────────────────────────────────┐  │
+│  │  • Allowed Operations    [read_file, create_file, ...]       │  │
+│  │  • Allowed Paths         [/project/src, /project/tests]      │  │
+│  │  • Blocked Paths         [/project/secrets.py]               │  │
+│  │  • Auto-Approve          [read_file, list_dir]               │  │
+│  └──────────────────────────────────────────────────────────────┘  │
+└────────────────────────────┬────────────────────────────────────────┘
+                             │
+                ┌────────────┴────────────┐
+                ▼                         ▼
+┌───────────────────────────┐  ┌──────────────────────────┐
+│      SANDBOX MODE         │  │    DIRECT MODE           │
+│  ┌─────────────────────┐  │  │  ┌────────────────────┐  │
+│  │ 1. Create sandbox   │  │  │  │ 1. Check trust     │  │
+│  │ 2. Copy project     │  │  │  │ 2. Check whitelist │  │
+│  │ 3. Run operations   │  │  │  │ 3. Execute op      │  │
+│  │ 4. Track changes    │  │  │  │ 4. Log action      │  │
+│  │ 5. Review diff      │  │  │  └────────────────────┘  │
+│  │ 6. Apply/Discard    │  │  │                          │
+│  └─────────────────────┘  │  └──────────────────────────┘
+└───────────────────────────┘
+                │
+                ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                      ACTION RUNNER                                  │
+│  ┌──────────────────────────────────────────────────────────────┐  │
+│  │  Generate Action Script:                                      │  │
+│  │    • Description, reason, affected files                      │  │
+│  │    • Automatic backups                                        │  │
+│  │    • Executable bash script                                   │  │
+│  │                                                                │  │
+│  │  Execute Action:                                              │  │
+│  │    • Run via wrapper (run-action.sh)                         │  │
+│  │    • Full logging to .dev/logs/actions.log                   │  │
+│  │    • Capture output and status                               │  │
+│  └──────────────────────────────────────────────────────────────┘  │
+└────────────────────────────┬────────────────────────────────────────┘
+                             │
+                             ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                         LOGGER                                      │
+│  ┌──────────────────────────────────────────────────────────────┐  │
+│  │  • Trust level changes                                        │  │
+│  │  • Permission denials                                         │  │
+│  │  • Operation execution                                        │  │
+│  │  • Action script runs                                         │  │
+│  │  • Structured JSON output                                     │  │
+│  └──────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────┘
+
+WORKFLOW EXAMPLES:
+
+1. READ-ONLY EXPLORATION (Level 0)
+   User → TrustLevel(0) → Whitelist → Read Files → Logger
+
+2. SAFE FILE CREATION (Level 1)
+   User → TrustLevel(1) → Whitelist → Create Files → Logger
+
+3. MODIFY WITH BACKUP (Level 2)
+   User → TrustLevel(2) → Whitelist → Backup → Modify → Logger
+
+4. SANDBOX TESTING (Level 2-4)
+   User → Sandbox.create() → Copy Project → Run Operations → 
+   Diff → Review → Apply/Discard → Logger
+
+5. ACTION SCRIPTS (Level 3)
+   User → TrustLevel(3) → ActionRunner.generate() → 
+   Human Review → run-action.sh → Logger
+
+6. FULL AUTOMATION (Level 4)
+   User → TrustLevel(4) → Whitelist → ActionRunner.execute() → Logger
+
+DATA FLOW:
+
+┌──────────┐     ┌──────────────┐     ┌───────────┐     ┌──────────┐
+│   User   │────▶│ Trust Check  │────▶│ Whitelist │────▶│ Execute  │
+│ Request  │     │   (Level)    │     │   Check   │     │ Operation│
+└──────────┘     └──────────────┘     └───────────┘     └────┬─────┘
+                        │                    │                 │
+                        ▼                    ▼                 ▼
+                   ┌────────────────────────────────────────────┐
+                   │              LOGGER                        │
+                   │  (All decisions and actions recorded)      │
+                   └────────────────────────────────────────────┘
+
+SAFETY LAYERS:
+
+Layer 1: Trust Levels     → Broad operation categories
+Layer 2: Whitelist        → Fine-grained path/operation control
+Layer 3: Sandbox          → Isolated testing environment
+Layer 4: Action Scripts   → Human review before execution
+Layer 5: Logging          → Full audit trail
+Layer 6: Backups          → Automatic before modifications
+
+DIRECTORY STRUCTURE:
+
+kiro-automation-framework/
+├── src/kiro_automation/       # Core framework
+│   ├── trust_levels.py        # Trust level system
+│   ├── whitelist.py           # Operation whitelist
+│   ├── sandbox.py             # Sandbox mode
+│   ├── action_runner.py       # Action scripts
+│   └── logger.py              # Centralized logging
+├── tests/                     # Test suite
+├── docs/                      # Documentation
+├── examples/                  # Usage examples
+├── scripts/                   # Helper scripts
+└── run-action.sh              # Action wrapper
+
+CONFIGURATION FILES:
+
+.automation-config              # Trust level setting
+.automation-whitelist.json      # Whitelist configuration
+.dev/logs/actions.log          # Action execution log
+.dev/actions/*.sh              # Generated action scripts
